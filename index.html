@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>16th Note Fill Lab</title>
+    <style>
+      :root {
+        --bg: #0b1020;
+        --bg-soft: #121a2d;
+        --panel: rgba(18, 26, 45, 0.88);
+        --panel-alt: rgba(22, 35, 58, 0.95);
+        --line: rgba(167, 189, 255, 0.2);
+        --text: #edf2ff;
+        --muted: #aab9d7;
+        --accent: #7bdff2;
+        --accent-2: #8bd3a7;
+        --accent-3: #f7b267;
+        --danger: #ff6b6b;
+        --shadow: 0 20px 50px rgba(10, 15, 26, 0.45);
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        font-family: Inter, "Segoe UI", sans-serif;
+        background:
+          radial-gradient(circle at top, rgba(123, 223, 242, 0.16), transparent 30%),
+          linear-gradient(180deg, #0b1020 0%, #0d1324 100%);
+        color: var(--text);
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        padding: 32px 18px 48px;
+      }
+
+      .page-shell {
+        width: min(1200px, 100%);
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 22px 28px;
+        background: rgba(10, 17, 30, 0.7);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        backdrop-filter: blur(12px);
+      }
+
+      .brand {
+        font-size: clamp(1.3rem, 2vw, 2rem);
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+
+      .controls {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .tempo-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 8px 14px;
+      }
+
+      .tempo-wrap label {
+        font-size: 0.88rem;
+        color: var(--muted);
+      }
+
+      .tempo-value {
+        font-weight: 700;
+        color: var(--accent);
+      }
+
+      input[type="range"] {
+        accent-color: var(--accent);
+        width: 160px;
+      }
+
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 0.9rem 1.2rem;
+        font-size: 0.96rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.18s ease, filter 0.18s ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.06);
+      }
+
+      .primary-btn {
+        background: linear-gradient(135deg, var(--accent), #6bb8ff);
+        color: #07111f;
+      }
+
+      .secondary-btn {
+        background: rgba(255,255,255,0.06);
+        color: var(--text);
+        border: 1px solid var(--line);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 340px 1fr;
+        gap: 28px;
+        margin-top: 30px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        box-shadow: var(--shadow);
+        padding: 22px;
+      }
+
+      .panel h2 {
+        margin: 0 0 18px;
+        font-size: 1.1rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .rudiment-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .rudiment-item {
+        width: 100%;
+        text-align: left;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid transparent;
+        border-radius: 16px;
+        color: var(--text);
+        padding: 14px 16px;
+      }
+
+      .rudiment-item.active {
+        border-color: rgba(123, 223, 242, 0.75);
+        background: rgba(123, 223, 242, 0.08);
+      }
+
+      .rudiment-name {
+        display: block;
+        font-weight: 800;
+        font-size: 1rem;
+      }
+
+      .rudiment-meta {
+        display: block;
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 0.8rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .pattern-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .pattern-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .eyebrow {
+        margin: 0 0 6px;
+        color: var(--muted);
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+      }
+
+      .pattern-name {
+        margin: 0;
+        font-size: clamp(2rem, 3vw, 3.1rem);
+      }
+
+      .level-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 0.9rem;
+        border-radius: 999px;
+        background: rgba(139, 211, 167, 0.14);
+        border: 1px solid rgba(139, 211, 167, 0.45);
+        color: var(--accent-2);
+        font-size: 0.8rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 800;
+      }
+
+      .count-row {
+        display: grid;
+        grid-template-columns: repeat(16, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .count-cell {
+        height: 52px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: var(--muted);
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.02);
+      }
+
+      .count-cell:nth-child(4n) {
+        background: rgba(123, 223, 242, 0.08);
+        color: var(--accent);
+      }
+
+      .pattern-grid {
+        display: grid;
+        grid-template-columns: repeat(16, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .note-cell {
+        position: relative;
+        height: 84px;
+        border-radius: 14px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.02);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        font-weight: 900;
+        color: var(--text);
+        transition: all 0.14s ease;
+      }
+
+      .note-cell.active {
+        background: linear-gradient(135deg, rgba(123, 223, 242, 0.2), rgba(107, 184, 255, 0.3));
+        border-color: rgba(123, 223, 242, 0.7);
+        box-shadow: inset 0 0 0 1px rgba(123, 223, 242, 0.8);
+        transform: translateY(-2px);
+      }
+
+      .note-cell .label {
+        display: inline-block;
+        line-height: 1;
+      }
+
+      .note-cell[data-stroke="R"] .label { color: var(--accent-3); }
+      .note-cell[data-stroke="L"] .label { color: var(--accent-2); }
+      .note-cell[data-stroke="F"] .label { color: var(--danger); }
+      .note-cell[data-stroke="-"] .label { color: rgba(255,255,255,0.2); }
+
+      .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .info-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 18px 16px;
+      }
+
+      .info-card h3 {
+        margin: 0 0 10px;
+        font-size: 0.8rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .info-card p {
+        margin: 0;
+        line-height: 1.7;
+        color: var(--text);
+      }
+
+      @media (max-width: 840px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .topbar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .controls {
+          justify-content: space-between;
+        }
+
+        .info-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="brand">16th Note Fill Lab</div>
+        <div class="controls">
+          <div class="tempo-wrap">
+            <label for="tempo">Tempo</label>
+            <span id="tempoValue" class="tempo-value">110</span>
+            <input id="tempo" type="range" min="60" max="180" step="1" value="110" />
+          </div>
+          <button id="playBtn" class="primary-btn">Play Pattern</button>
+          <button id="stopBtn" class="secondary-btn">Stop</button>
+        </div>
+      </header>
+
+      <main class="layout">
+        <aside class="panel">
+          <h2>Rudiments</h2>
+          <div id="rudimentList" class="rudiment-list"></div>
+        </aside>
+
+        <section class="panel pattern-panel">
+          <div class="pattern-header">
+            <div>
+              <p class="eyebrow">Selected Fill</p>
+              <h1 id="selectedName" class="pattern-name">Single Paradiddle</h1>
+            </div>
+            <span id="levelBadge" class="level-badge">Beginner</span>
+          </div>
+
+          <div id="countRow" class="count-row" aria-label="Subdivision count"></div>
+          <div id="patternGrid" class="pattern-grid" aria-live="polite"></div>
+
+          <div class="info-grid">
+            <div class="info-card">
+              <h3>Stickings</h3>
+              <p id="stickingsText">R L R R | L R L L</p>
+            </div>
+            <div class="info-card">
+              <h3>Focus</h3>
+              <p id="focusText">Keep the accents controlled while maintaining even 16ths.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      const rudiments = [
+        {
+          id: 'single-paradiddle',
+          name: 'Single Paradiddle',
+          level: 'Beginner',
+          stickings: 'R L R R | L R L L',
+          focus: 'Alternate hands and keep the “R R” landing evenly on the first and fourth 16th.',
+          pattern: ['R', 'L', 'R', 'R', 'L', 'R', 'L', 'L', 'R', 'L', 'R', 'R', 'L', 'R', 'L', 'L']
+        },
+        {
+          id: 'double-paradiddle',
+          name: 'Double Paradiddle',
+          level: 'Intermediate',
+          stickings: 'R L R L R R | L R L R L L',
+          focus: 'This pattern adds a second accent pair, so keep your hands moving with a steady rebound.',
+          pattern: ['R', 'L', 'R', 'L', 'R', 'R', 'L', 'R', 'L', 'R', 'L', 'R', 'L', 'L', 'R', 'L']
+        },
+        {
+          id: 'single-stroke-roll',
+          name: 'Single Stroke Roll',
+          level: 'Beginner',
+          stickings: 'R R R R | L L L L',
+          focus: 'Even sticking without accenting too heavily. Let the wrists stay loose and relaxed.',
+          pattern: ['R', 'R', 'R', 'R', 'L', 'L', 'L', 'L', 'R', 'R', 'R', 'R', 'L', 'L', 'L', 'L']
+        },
+        {
+          id: 'flam-tap',
+          name: 'Flam Tap',
+          level: 'Intermediate',
+          stickings: 'R (f) L | R (f) L | R (f) L | R (f) L',
+          focus: 'Use the grace note to create a compact, bouncy feel without rushing the main stroke.',
+          pattern: ['F', 'L', 'R', 'L', 'F', 'L', 'R', 'L', 'F', 'L', 'R', 'L', 'F', 'L', 'R', 'L']
+        },
+        {
+          id: 'drag-five',
+          name: 'Drag Five',
+          level: 'Advanced',
+          stickings: 'R L R (drag) L R',
+          focus: 'Think of each drag as a quick grace note before the main note, and keep the pulse even.',
+          pattern: ['R', 'L', 'R', 'F', 'L', 'R', 'L', 'R', 'F', 'L', 'R', 'L', 'R', 'F', 'L', 'R']
+        },
+        {
+          id: 'diddle',
+          name: 'Diddle',
+          level: 'Intermediate',
+          stickings: 'R L R L | R L R L',
+          focus: 'Stay relaxed and keep the alternate sticking flowing with a lightly articulated rebound.',
+          pattern: ['R', 'L', 'R', 'L', 'R', 'L', 'R', 'L', 'R', 'L', 'R', 'L', 'R', 'L', 'R', 'L']
+        }
+      ];
+
+      const countLabels = ['1', 'e', '&', 'a', '2', 'e', '&', 'a', '3', 'e', '&', 'a', '4', 'e', '&', 'a'];
+      const rudimentList = document.getElementById('rudimentList');
+      const selectedName = document.getElementById('selectedName');
+      const levelBadge = document.getElementById('levelBadge');
+      const stickingsText = document.getElementById('stickingsText');
+      const focusText = document.getElementById('focusText');
+      const countRow = document.getElementById('countRow');
+      const patternGrid = document.getElementById('patternGrid');
+      const tempoSlider = document.getElementById('tempo');
+      const tempoValue = document.getElementById('tempoValue');
+      const playBtn = document.getElementById('playBtn');
+      const stopBtn = document.getElementById('stopBtn');
+
+      let selectedIndex = 0;
+      let playbackInterval = null;
+      let currentStep = 0;
+      let audioContext = null;
+
+      function createCountRow() {
+        countRow.innerHTML = '';
+        countLabels.forEach((label) => {
+          const cell = document.createElement('div');
+          cell.className = 'count-cell';
+          cell.textContent = label;
+          countRow.appendChild(cell);
+        });
+      }
+
+      function renderRudimentList() {
+        rudimentList.innerHTML = '';
+
+        rudiments.forEach((rudiment, index) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'rudiment-item' + (index === selectedIndex ? ' active' : '');
+          btn.innerHTML = `
+            <span class="rudiment-name">${rudiment.name}</span>
+            <span class="rudiment-meta">${rudiment.level}</span>
+          `;
+          btn.addEventListener('click', () => {
+            selectedIndex = index;
+            stopPlayback();
+            renderSelectedPattern();
+          });
+          rudimentList.appendChild(btn);
+        });
+      }
+
+      function renderSelectedPattern() {
+        const rudiment = rudiments[selectedIndex];
+        selectedName.textContent = rudiment.name;
+        levelBadge.textContent = rudiment.level;
+        stickingsText.textContent = rudiment.stickings;
+        focusText.textContent = rudiment.focus;
+
+        patternGrid.innerHTML = '';
+
+        rudiment.pattern.forEach((stroke, index) => {
+          const cell = document.createElement('div');
+          cell.className = 'note-cell';
+          cell.dataset.stroke = stroke;
+          cell.innerHTML = `<span class="label">${stroke === 'F' ? 'fl' : stroke}</span>`;
+          if (index === currentStep) {
+            cell.classList.add('active');
+          }
+          patternGrid.appendChild(cell);
+        });
+
+        renderRudimentList();
+      }
+
+      function highlightCurrentStep(step) {
+        const cells = [...document.querySelectorAll('.note-cell')];
+        cells.forEach((cell, index) => {
+          cell.classList.toggle('active', index === step);
+        });
+      }
+
+      function triggerDrumHit(stroke) {
+        const context = getAudioContext();
+        if (!context) return;
+
+        const time = context.currentTime + 0.02;
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+
+        const toneMap = {
+          R: [220, 'triangle'],
+          L: [180, 'square'],
+          F: [160, 'sawtooth']
+        };
+
+        const config = toneMap[stroke] || [200, 'triangle'];
+        oscillator.type = config[1];
+        oscillator.frequency.setValueAtTime(config[0], time);
+
+        gain.gain.setValueAtTime(0.0001, time);
+        gain.gain.exponentialRampToValueAtTime(0.12, time + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.12);
+
+        oscillator.start(time);
+        oscillator.stop(time + 0.14);
+      }
+
+      function getAudioContext() {
+        if (!audioContext) {
+          const AudioCtor = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtor) return null;
+          audioContext = new AudioCtor();
+        }
+
+        if (audioContext.state === 'suspended') {
+          audioContext.resume();
+        }
+
+        return audioContext;
+      }
+
+      function playPattern() {
+        stopPlayback();
+        const rudiment = rudiments[selectedIndex];
+        const intervalMs = 60000 / Number(tempoSlider.value) / 4;
+        currentStep = 0;
+        highlightCurrentStep(currentStep);
+
+        const playStep = () => {
+          const stroke = rudiment.pattern[currentStep];
+          triggerDrumHit(stroke);
+          highlightCurrentStep(currentStep);
+          currentStep += 1;
+
+          if (currentStep >= rudiment.pattern.length) {
+            currentStep = 0;
+          }
+        };
+
+        playStep();
+        playbackInterval = window.setInterval(playStep, intervalMs);
+      }
+
+      function stopPlayback() {
+        if (playbackInterval) {
+          window.clearInterval(playbackInterval);
+          playbackInterval = null;
+        }
+        currentStep = 0;
+        highlightCurrentStep(0);
+      }
+
+      tempoSlider.addEventListener('input', (event) => {
+        tempoValue.textContent = event.target.value;
+        if (playbackInterval) {
+          playPattern();
+        }
+      });
+
+      playBtn.addEventListener('click', playPattern);
+      stopBtn.addEventListener('click', stopPlayback);
+
+      createCountRow();
+      renderSelectedPattern();
+    </script>
+  </body>
+</html>
